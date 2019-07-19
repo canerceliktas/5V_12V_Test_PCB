@@ -1,0 +1,12 @@
+>>> Warning 203 "main.c" Line 48(1,1): Condition always TRUE
+>>> Warning 204 "main.c" Line 137(1,1): Condition always FALSE
+>>> Warning 204 "main.c" Line 144(1,1): Condition always FALSE
+>>> Warning 206 "main.c" Line 147(1,1): Variable of this data type is never greater than this constant
+>>> Warning 204 "main.c" Line 148(1,1): Condition always FALSE
+>>> Warning 204 "main.c" Line 154(1,1): Condition always FALSE
+>>> Warning 204 "main.c" Line 160(1,1): Condition always FALSE
+>>> Warning 204 "main.c" Line 168(1,1): Condition always FALSE
+>>> Warning 204 "main.c" Line 174(1,1): Condition always FALSE
+      Memory usage:   ROM=15%      RAM=18% - 21%
+      0 Errors,  9 Warnings.
+Build Successful.

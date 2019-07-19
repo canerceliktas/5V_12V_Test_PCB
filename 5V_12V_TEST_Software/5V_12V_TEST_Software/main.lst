@@ -1,0 +1,1408 @@
+CCS PCM C Compiler, Version 4.140, 808               22-Ara-18 20:41
+
+               Filename:   C:\SW\5V_12V_TEST\main.lst
+
+               ROM used:   1224 words (15%)
+                           Largest free fragment is 2048
+               RAM used:   66 (18%) at main() level
+                           79 (21%) worst case
+               Stack:     6 worst case (3 in main + 3 for interrupts)
+
+*
+0000:  MOVLW  03
+0001:  MOVWF  0A
+0002:  GOTO   366
+0003:  NOP
+0004:  MOVWF  7F
+0005:  SWAPF  03,W
+0006:  CLRF   03
+0007:  MOVWF  21
+0008:  MOVF   0A,W
+0009:  MOVWF  20
+000A:  CLRF   0A
+000B:  MOVF   04,W
+000C:  MOVWF  22
+000D:  MOVF   77,W
+000E:  MOVWF  23
+000F:  MOVF   78,W
+0010:  MOVWF  24
+0011:  MOVF   79,W
+0012:  MOVWF  25
+0013:  MOVF   7A,W
+0014:  MOVWF  26
+0015:  BCF    03.7
+0016:  BCF    03.5
+0017:  BTFSS  0B.5
+0018:  GOTO   01B
+0019:  BTFSC  0B.2
+001A:  GOTO   02C
+001B:  MOVF   22,W
+001C:  MOVWF  04
+001D:  MOVF   23,W
+001E:  MOVWF  77
+001F:  MOVF   24,W
+0020:  MOVWF  78
+0021:  MOVF   25,W
+0022:  MOVWF  79
+0023:  MOVF   26,W
+0024:  MOVWF  7A
+0025:  MOVF   20,W
+0026:  MOVWF  0A
+0027:  SWAPF  21,W
+0028:  MOVWF  03
+0029:  SWAPF  7F,F
+002A:  SWAPF  7F,W
+002B:  RETFIE
+002C:  BCF    0A.3
+002D:  BCF    0A.4
+002E:  GOTO   0BD
+.................... #include <16f876.h> 
+.................... //////// Standard Header file for the PIC16F876 device //////////////// 
+.................... #device PIC16F876 
+.................... #list 
+....................  
+.................... //#include <Digit_sifirlama.c> 
+.................... #FUSES XT, WDT, PUT,BROWNOUT, CPD, WRT, PROTECT        	//BROWN OUT DÜÞERSE RESETLER, POWER UP TIMER KALKIÞTA BELÝRLÝ DEÐERE KADAR RESETLÝ TUTAR 
+.................... #device	adc=10 
+.................... #use delay(clock=4000000,RESTART_WDT)  
+....................  
+....................  
+.................... #include "Definitions.c" 
+....................    	 
+.................... #define ADigit1 PIN_C0  //Display 1 in digitlerini  
+.................... #define ADigit2 PIN_C1  //topraklamak için gereken  
+.................... #define ADigit3 PIN_C2  //sinyalin alýndýðý  
+.................... #define ADigit4 PIN_C3  //portlar tanýmlandý 
+....................    
+.................... #define BDigit1 PIN_C7  //Display 2 nin digitlerini  
+.................... #define BDigit2 PIN_C6  //topraklamak için gereken  
+.................... #define BDigit3 PIN_C5  //sinyalin alýndýðý  
+.................... #define BDigit4 PIN_C4  //portlar tanýmlandý 
+....................  
+.................... #define Buzzer 	PIN_A2 
+.................... #define LED_COM PIN_A3 
+....................  
+.................... #define	adc_sample	100 
+....................  
+.................... #define LED_A_L	LED_NUM,7 
+.................... #define LED_A_H	LED_NUM,5 
+.................... #define LED_B_L	LED_NUM,1 
+.................... #define LED_B_H	LED_NUM,3 
+....................  
+.................... #define BUTTON_1 PIN_A4 
+.................... #define BUTTON_2 PIN_A5	 
+....................  
+.................... int	DIGIT_1,DIGIT_2,DIGIT_3,DIGIT_4,DIGIT_5,DIGIT_6,DIGIT_7,DIGIT_8,LED_NUM; 	 
+.................... int TIME_MAKER,REG_10ms,REG_20ms,REG_200ms, adc_counter,DigitOrder, DIGIT_VAL;							//////17.23 ise  1=onlar, 7=birler, 2=o_onlar, 3=o_birler//// 
+.................... int BCD_1000, BCD_100, BCD_10, BCD_1; 
+.................... int set_active_all,set_active_a,set_active_b,set_active_disp,set_status; 
+....................  
+.................... int SET_B_L, SET_B_H, SET_A_L, SET_A_H ; 
+....................  
+.................... int VOLT_A_L = 214;																						 
+.................... int VOLT_A_H = 316; 
+.................... int VOLT_B_L = 233; 
+.................... int VOLT_B_H = 243; 
+....................  
+.................... int16 VOLT_A, VOLT_B, VOLT_OLCULEN_A, VOLT_OLCULEN_B; 
+....................  
+.................... int32 adc_temp1, adc_temp2; 
+....................  
+.................... #include "Subroutins.c" 
+....................  
+.................... //------------------------------------------------------------------------------- 
+.................... //---------ÖLÇÜLEN DEÐERLERÝ KARÞILAÞTIRMA FONKSÝYONU---------------------------- 
+....................  
+.................... void READ_VOLTAGE(void)	//karþýlaþtýrma kodlarýný içeren fonksiyon 
+.................... {															  
+.................... 	set_adc_channel(0); 
+*
+0114:  MOVLW  00
+0115:  MOVWF  78
+0116:  MOVF   1F,W
+0117:  ANDLW  C7
+0118:  IORWF  78,W
+0119:  MOVWF  1F
+.................... 	delay_us(5);					// Kanal seçiminde sonra bu bekleme süresi verilmelidir     
+011A:  CLRWDT
+011B:  GOTO   11C
+011C:  GOTO   11D
+.................... 	adc_temp1=adc_temp1+read_adc(); 
+011D:  BSF    1F.2
+011E:  BTFSC  1F.2
+011F:  GOTO   11E
+0120:  BSF    03.5
+0121:  MOVF   1E,W
+0122:  BCF    03.5
+0123:  ADDWF  50,F
+0124:  MOVF   1E,W
+0125:  BTFSC  03.0
+0126:  INCFSZ 1E,W
+0127:  ADDWF  51,F
+0128:  MOVLW  00
+0129:  BTFSC  03.0
+012A:  MOVLW  01
+012B:  ADDWF  52,F
+012C:  MOVLW  00
+012D:  BTFSC  03.0
+012E:  MOVLW  01
+012F:  ADDWF  53,F
+.................... 	set_adc_channel(1);    	   
+0130:  MOVLW  08
+0131:  MOVWF  78
+0132:  MOVF   1F,W
+0133:  ANDLW  C7
+0134:  IORWF  78,W
+0135:  MOVWF  1F
+.................... 	delay_us(5); 
+0136:  CLRWDT
+0137:  GOTO   138
+0138:  GOTO   139
+.................... 	adc_temp2=adc_temp2+read_adc(); // adc_temp : 100 adet sample ý depoladýðýmýz deðiþken 
+0139:  BSF    1F.2
+013A:  BTFSC  1F.2
+013B:  GOTO   13A
+013C:  BSF    03.5
+013D:  MOVF   1E,W
+013E:  BCF    03.5
+013F:  ADDWF  54,F
+0140:  MOVF   1E,W
+0141:  BTFSC  03.0
+0142:  INCFSZ 1E,W
+0143:  ADDWF  55,F
+0144:  MOVLW  00
+0145:  BTFSC  03.0
+0146:  MOVLW  01
+0147:  ADDWF  56,F
+0148:  MOVLW  00
+0149:  BTFSC  03.0
+014A:  MOVLW  01
+014B:  ADDWF  57,F
+.................... 	++adc_counter;          		// adc_counter : bu deðiþken 100 e ulaþtýðýnda toplam sample lar aldýðýmýz örnek sayýsýna bölünüp  
+014C:  INCF   34,F
+.................... 									// ilgili deðþkenlere aktarýlýr 
+.................... 	if (adc_counter == adc_sample)  
+014D:  MOVF   34,W
+014E:  SUBLW  64
+014F:  BTFSS  03.2
+0150:  GOTO   178
+.................... 	{ 
+.................... 		adc_counter = 0;   			//adc_counter, yeteri kadar sample aldýðýnda adc sýfýrlanýr			 
+0151:  CLRF   34
+.................... 		VOLT_A = (adc_temp1/adc_sample); 
+0152:  BCF    03.1
+0153:  MOVF   53,W
+0154:  MOVWF  5C
+0155:  MOVF   52,W
+0156:  MOVWF  5B
+0157:  MOVF   51,W
+0158:  MOVWF  5A
+0159:  MOVF   50,W
+015A:  MOVWF  59
+015B:  CLRF   60
+015C:  CLRF   5F
+015D:  CLRF   5E
+015E:  MOVLW  64
+015F:  MOVWF  5D
+0160:  CALL   0C5
+0161:  MOVF   78,W
+0162:  MOVWF  49
+0163:  MOVF   77,W
+0164:  MOVWF  48
+.................... 		VOLT_B = (adc_temp2/adc_sample); 
+0165:  BCF    03.1
+0166:  MOVF   57,W
+0167:  MOVWF  5C
+0168:  MOVF   56,W
+0169:  MOVWF  5B
+016A:  MOVF   55,W
+016B:  MOVWF  5A
+016C:  MOVF   54,W
+016D:  MOVWF  59
+016E:  CLRF   60
+016F:  CLRF   5F
+0170:  CLRF   5E
+0171:  MOVLW  64
+0172:  MOVWF  5D
+0173:  CALL   0C5
+0174:  MOVF   78,W
+0175:  MOVWF  4B
+0176:  MOVF   77,W
+0177:  MOVWF  4A
+.................... 	} 
+.................... } 
+0178:  BCF    0A.3
+0179:  BCF    0A.4
+017A:  GOTO   3BF (RETURN)
+.................... ////////////////////////////////////////////////////////////////////// 
+....................  
+....................  
+....................  
+.................... //-----------------------DISPLAY KODLARI (7 SEGMENT CONVERT)------------------------ 
+.................... //---------------------------------------------------------------------------------- 
+....................  
+.................... //Pin sýrasý     7  6  5  4  3  2  1  0  
+.................... //Segmentler	 a  f  b  e  d  dp c  g 
+.................... 	 
+.................... void Convert7Segment(ref)	 
+.................... { 
+.................... 	switch (ref) 
+.................... 	{ 
+*
+0306:  MOVF   59,W
+0307:  ADDLW  F6
+0308:  BTFSC  03.0
+0309:  GOTO   329
+030A:  ADDLW  0A
+030B:  GOTO   32A
+.................... 		case 0: 
+.................... 		DIGIT_VAL = (0b11111010); 
+030C:  MOVLW  FA
+030D:  MOVWF  36
+.................... 		break; 
+030E:  GOTO   329
+.................... 	 
+.................... 		case 1: 
+.................... 		DIGIT_VAL = (0b00100010); 
+030F:  MOVLW  22
+0310:  MOVWF  36
+.................... 		break; 
+0311:  GOTO   329
+.................... 		 
+.................... 	 	case 2: 
+.................... 		DIGIT_VAL = (0b10111001); 
+0312:  MOVLW  B9
+0313:  MOVWF  36
+.................... 		break; 
+0314:  GOTO   329
+.................... 	 
+.................... 		case 3: 
+.................... 		DIGIT_VAL = (0b10101011); 
+0315:  MOVLW  AB
+0316:  MOVWF  36
+.................... 		break; 
+0317:  GOTO   329
+.................... 	 
+.................... 		case 4: 
+.................... 		DIGIT_VAL = (0b01100011); 
+0318:  MOVLW  63
+0319:  MOVWF  36
+.................... 		break; 
+031A:  GOTO   329
+.................... 	 
+.................... 		case 5:  
+.................... 		DIGIT_VAL = (0b11001011); 
+031B:  MOVLW  CB
+031C:  MOVWF  36
+.................... 		break; 
+031D:  GOTO   329
+.................... 		 
+.................... 		case 6: 
+.................... 		DIGIT_VAL = (0b11011011); 
+031E:  MOVLW  DB
+031F:  MOVWF  36
+.................... 		break; 
+0320:  GOTO   329
+.................... 	 
+.................... 		case 7: 
+.................... 		DIGIT_VAL = (0b10100010); 
+0321:  MOVLW  A2
+0322:  MOVWF  36
+.................... 		break; 
+0323:  GOTO   329
+.................... 	 
+.................... 		case 8: 
+.................... 		DIGIT_VAL = (0b11111011); 
+0324:  MOVLW  FB
+0325:  MOVWF  36
+.................... 		break; 
+0326:  GOTO   329
+.................... 	 
+.................... 		case 9:  
+.................... 		DIGIT_VAL = (0b11101011); 
+0327:  MOVLW  EB
+0328:  MOVWF  36
+.................... 		break; 
+.................... 	}	 
+.................... } 
+0329:  RETURN
+....................  
+....................  
+.................... /////////////////////////////////////////////////////////////////////////////// 
+.................... /////////////////////////////////////////////////////////////////////////////// 
+....................  
+....................  
+.................... //-----------------------------------------------------------------// 
+.................... //------------------------DISPLAY DRIVE----------------------------// 
+....................  
+.................... void DisplayDrive(void) 
+.................... { 
+.................... 	OUTPUT_B(0); 			// C PORTUNUN BÜTÜN ÇIKIÞLARI LOJÝK 0 YAPILDI 
+*
+002F:  BSF    03.5
+0030:  CLRF   06
+0031:  BCF    03.5
+0032:  CLRF   06
+.................... 	OUTPUT_BIT(PIN_A3,0); 	//A portunun a3 pini 0 yapýldý (LED_COM) 
+0033:  BCF    05.3
+0034:  BSF    03.5
+0035:  BCF    05.3
+....................  
+....................  
+.................... 	switch (DigitOrder) 
+.................... 	{ 
+0036:  BCF    03.5
+0037:  MOVF   35,W
+0038:  ADDLW  F7
+0039:  BTFSC  03.0
+003A:  GOTO   0AD
+003B:  ADDLW  09
+003C:  GOTO   0B0
+.................... 		case 0: 
+.................... 		++DigitOrder; 
+003D:  INCF   35,F
+.................... 		OUTPUT_B(DIGIT_1); 
+003E:  BSF    03.5
+003F:  CLRF   06
+0040:  BCF    03.5
+0041:  MOVF   27,W
+0042:  MOVWF  06
+.................... 		OUTPUT_HIGH(ADigit1); 
+0043:  BCF    58.0
+0044:  MOVF   58,W
+0045:  BSF    03.5
+0046:  MOVWF  07
+0047:  BCF    03.5
+0048:  BSF    07.0
+.................... 		break; 
+0049:  GOTO   0AD
+.................... 	 
+.................... 		case 1: 
+.................... 		++DigitOrder; 
+004A:  INCF   35,F
+.................... 		OUTPUT_B(DIGIT_2);- 
+004B:  BSF    03.5
+004C:  CLRF   06
+004D:  BCF    03.5
+004E:  MOVF   28,W
+004F:  MOVWF  06
+.................... 		OUTPUT_HIGH(ADigit2); 
+0050:  BCF    58.1
+0051:  MOVF   58,W
+0052:  BSF    03.5
+0053:  MOVWF  07
+0054:  BCF    03.5
+0055:  BSF    07.1
+.................... 		break; 
+0056:  GOTO   0AD
+....................  
+.................... 		case 2: 
+.................... 		++DigitOrder; 
+0057:  INCF   35,F
+.................... 		OUTPUT_B(DIGIT_3); 
+0058:  BSF    03.5
+0059:  CLRF   06
+005A:  BCF    03.5
+005B:  MOVF   29,W
+005C:  MOVWF  06
+.................... 		OUTPUT_HIGH(ADigit3); 
+005D:  BCF    58.2
+005E:  MOVF   58,W
+005F:  BSF    03.5
+0060:  MOVWF  07
+0061:  BCF    03.5
+0062:  BSF    07.2
+.................... 		break; 
+0063:  GOTO   0AD
+.................... 	 
+.................... 		case 3: 
+.................... 		++DigitOrder; 
+0064:  INCF   35,F
+.................... 		OUTPUT_B(DIGIT_4); 
+0065:  BSF    03.5
+0066:  CLRF   06
+0067:  BCF    03.5
+0068:  MOVF   2A,W
+0069:  MOVWF  06
+.................... 		OUTPUT_HIGH(ADigit4); 
+006A:  BCF    58.3
+006B:  MOVF   58,W
+006C:  BSF    03.5
+006D:  MOVWF  07
+006E:  BCF    03.5
+006F:  BSF    07.3
+.................... 	 
+.................... 		case 4: 
+.................... 		++DigitOrder; 
+0070:  INCF   35,F
+.................... 		OUTPUT_B(DIGIT_5); 
+0071:  BSF    03.5
+0072:  CLRF   06
+0073:  BCF    03.5
+0074:  MOVF   2B,W
+0075:  MOVWF  06
+.................... 		OUTPUT_HIGH(BDigit1); 
+0076:  BCF    58.7
+0077:  MOVF   58,W
+0078:  BSF    03.5
+0079:  MOVWF  07
+007A:  BCF    03.5
+007B:  BSF    07.7
+.................... 	 
+.................... 		case 5: 
+.................... 		++DigitOrder; 
+007C:  INCF   35,F
+.................... 		OUTPUT_B(DIGIT_6); 
+007D:  BSF    03.5
+007E:  CLRF   06
+007F:  BCF    03.5
+0080:  MOVF   2C,W
+0081:  MOVWF  06
+.................... 		OUTPUT_HIGH(BDigit2); 
+0082:  BCF    58.6
+0083:  MOVF   58,W
+0084:  BSF    03.5
+0085:  MOVWF  07
+0086:  BCF    03.5
+0087:  BSF    07.6
+.................... 	 	break; 
+0088:  GOTO   0AD
+.................... 	 
+.................... 		case 6: 
+.................... 		++DigitOrder; 
+0089:  INCF   35,F
+.................... 		OUTPUT_B(DIGIT_7); 
+008A:  BSF    03.5
+008B:  CLRF   06
+008C:  BCF    03.5
+008D:  MOVF   2D,W
+008E:  MOVWF  06
+.................... 		OUTPUT_HIGH(BDigit3); 
+008F:  BCF    58.5
+0090:  MOVF   58,W
+0091:  BSF    03.5
+0092:  MOVWF  07
+0093:  BCF    03.5
+0094:  BSF    07.5
+.................... 		break; 
+0095:  GOTO   0AD
+.................... 	 
+.................... 		case 7: 
+.................... 		++DigitOrder; 
+0096:  INCF   35,F
+.................... 		OUTPUT_B(DIGIT_8); 
+0097:  BSF    03.5
+0098:  CLRF   06
+0099:  BCF    03.5
+009A:  MOVF   2E,W
+009B:  MOVWF  06
+.................... 		OUTPUT_HIGH(BDigit4); 
+009C:  BCF    58.4
+009D:  MOVF   58,W
+009E:  BSF    03.5
+009F:  MOVWF  07
+00A0:  BCF    03.5
+00A1:  BSF    07.4
+.................... 		break; 
+00A2:  GOTO   0AD
+.................... 	 
+.................... 		case 8: 
+.................... 		OUTPUT_B(LED_NUM); 
+00A3:  BSF    03.5
+00A4:  CLRF   06
+00A5:  BCF    03.5
+00A6:  MOVF   2F,W
+00A7:  MOVWF  06
+.................... 		OUTPUT_HIGH(LED_COM); 
+00A8:  BSF    03.5
+00A9:  BCF    05.3
+00AA:  BCF    03.5
+00AB:  BSF    05.3
+.................... 		DigitOrder=0; 
+00AC:  CLRF   35
+.................... 		break; 
+.................... 	} 
+....................  
+.................... } 
+00AD:  BCF    0A.3
+00AE:  BCF    0A.4
+00AF:  GOTO   0C1 (RETURN)
+....................  
+.................... //////////////////////////////////////////////////////////////////////// 
+.................... ///////////////////////////////////////////////////////////////////////// 
+....................  
+.................... //--------------------------------------------------------------------------------------- 
+.................... //---------------------------DISPLAYE YAZDIRMA FONKSÝYONLARI----------------------------- 
+....................  
+.................... void AssignDisplay1 () 
+.................... { 
+.................... 	Convert7Segment(BCD_1000); 
+*
+0338:  MOVF   37,W
+0339:  MOVWF  59
+033A:  CALL   306
+.................... 	DIGIT_1 = DIGIT_VAL;	 
+033B:  MOVF   36,W
+033C:  MOVWF  27
+.................... 	Convert7Segment(BCD_100); 
+033D:  MOVF   38,W
+033E:  MOVWF  59
+033F:  CALL   306
+.................... 	DIGIT_2 = DIGIT_VAL; 
+0340:  MOVF   36,W
+0341:  MOVWF  28
+.................... 	Convert7Segment(BCD_10); 
+0342:  MOVF   39,W
+0343:  MOVWF  59
+0344:  CALL   306
+.................... 	DIGIT_3 = DIGIT_VAL; 
+0345:  MOVF   36,W
+0346:  MOVWF  29
+.................... 	Convert7Segment(BCD_1); 
+0347:  MOVF   3A,W
+0348:  MOVWF  59
+0349:  CALL   306
+.................... 	DIGIT_4 = DIGIT_VAL; 
+034A:  MOVF   36,W
+034B:  MOVWF  2A
+.................... 	 
+.................... } 
+034C:  BCF    0A.3
+034D:  BCF    0A.4
+034E:  GOTO   45F (RETURN)
+....................  
+.................... void AssignDisplay2() 
+.................... { 
+.................... 	Convert7Segment(BCD_1000); 
+034F:  MOVF   37,W
+0350:  MOVWF  59
+0351:  CALL   306
+.................... 	DIGIT_5 = DIGIT_VAL; 
+0352:  MOVF   36,W
+0353:  MOVWF  2B
+.................... 	Convert7Segment(BCD_100); 
+0354:  MOVF   38,W
+0355:  MOVWF  59
+0356:  CALL   306
+.................... 	DIGIT_6 = DIGIT_VAL; 
+0357:  MOVF   36,W
+0358:  MOVWF  2C
+.................... 	Convert7Segment(BCD_10); 
+0359:  MOVF   39,W
+035A:  MOVWF  59
+035B:  CALL   306
+.................... 	DIGIT_7 = DIGIT_VAL; 
+035C:  MOVF   36,W
+035D:  MOVWF  2D
+.................... 	Convert7Segment(BCD_1); 
+035E:  MOVF   3A,W
+035F:  MOVWF  59
+0360:  CALL   306
+.................... 	DIGIT_8 = DIGIT_VAL; 
+0361:  MOVF   36,W
+0362:  MOVWF  2E
+.................... 	 
+.................... } 
+0363:  BCF    0A.3
+0364:  BCF    0A.4
+0365:  GOTO   491 (RETURN)
+....................  
+.................... ///////////////////////////////////////////////////////////////////////////////////////////// 
+.................... ///////////////////////////////////////////////////////////////////////////////////////////// 
+....................  
+.................... /*#######################################################################*/ 
+.................... /*#######################################################################*/ 
+.................... void ConvertBINARYtoBCD(int16 VOLT_OLCULEN) 
+.................... 	{ 
+.................... 	BCD_1000=(VOLT_OLCULEN/1000); 
+*
+028F:  MOVF   5A,W
+0290:  MOVWF  5E
+0291:  MOVF   59,W
+0292:  MOVWF  5D
+0293:  MOVLW  03
+0294:  MOVWF  60
+0295:  MOVLW  E8
+0296:  MOVWF  5F
+0297:  CALL   245
+0298:  MOVF   78,W
+0299:  MOVWF  37
+.................... 	BCD_100=((VOLT_OLCULEN-(BCD_1000*1000))/100); 
+029A:  CLRF   5C
+029B:  MOVF   37,W
+029C:  MOVWF  5B
+029D:  MOVLW  03
+029E:  MOVWF  5E
+029F:  MOVLW  E8
+02A0:  MOVWF  5D
+02A1:  CALL   17B
+02A2:  MOVF   79,W
+02A3:  MOVWF  7A
+02A4:  MOVF   78,W
+02A5:  SUBWF  59,W
+02A6:  MOVWF  5B
+02A7:  MOVF   5A,W
+02A8:  MOVWF  5C
+02A9:  MOVF   79,W
+02AA:  BTFSS  03.0
+02AB:  INCFSZ 79,W
+02AC:  SUBWF  5C,F
+02AD:  MOVF   5C,W
+02AE:  MOVWF  5E
+02AF:  MOVF   5B,W
+02B0:  MOVWF  5D
+02B1:  CLRF   60
+02B2:  MOVLW  64
+02B3:  MOVWF  5F
+02B4:  CALL   245
+02B5:  MOVF   78,W
+02B6:  MOVWF  38
+.................... 	BCD_10=((VOLT_OLCULEN-(BCD_1000*1000)-(BCD_100*100))/10); 
+02B7:  CLRF   5C
+02B8:  MOVF   37,W
+02B9:  MOVWF  5B
+02BA:  MOVLW  03
+02BB:  MOVWF  5E
+02BC:  MOVLW  E8
+02BD:  MOVWF  5D
+02BE:  CALL   17B
+02BF:  MOVF   79,W
+02C0:  MOVWF  7A
+02C1:  MOVF   78,W
+02C2:  SUBWF  59,W
+02C3:  MOVWF  5B
+02C4:  MOVF   5A,W
+02C5:  MOVWF  5C
+02C6:  MOVF   79,W
+02C7:  BTFSS  03.0
+02C8:  INCFSZ 79,W
+02C9:  SUBWF  5C,F
+02CA:  MOVF   38,W
+02CB:  MOVWF  5D
+02CC:  MOVLW  64
+02CD:  MOVWF  5E
+02CE:  CALL   26A
+02CF:  MOVF   78,W
+02D0:  SUBWF  5B,F
+02D1:  MOVLW  00
+02D2:  BTFSS  03.0
+02D3:  MOVLW  01
+02D4:  SUBWF  5C,F
+02D5:  MOVF   5C,W
+02D6:  MOVWF  5E
+02D7:  MOVF   5B,W
+02D8:  MOVWF  5D
+02D9:  CLRF   60
+02DA:  MOVLW  0A
+02DB:  MOVWF  5F
+02DC:  CALL   245
+02DD:  MOVF   78,W
+02DE:  MOVWF  39
+.................... 	BCD_1=(VOLT_OLCULEN-(BCD_1000*1000)-(BCD_100*100)-(BCD_10*10)); 
+02DF:  CLRF   5C
+02E0:  MOVF   37,W
+02E1:  MOVWF  5B
+02E2:  MOVLW  03
+02E3:  MOVWF  5E
+02E4:  MOVLW  E8
+02E5:  MOVWF  5D
+02E6:  CALL   17B
+02E7:  MOVF   79,W
+02E8:  MOVWF  7A
+02E9:  MOVF   78,W
+02EA:  SUBWF  59,W
+02EB:  MOVWF  5B
+02EC:  MOVF   5A,W
+02ED:  MOVWF  5C
+02EE:  MOVF   79,W
+02EF:  BTFSS  03.0
+02F0:  INCFSZ 79,W
+02F1:  SUBWF  5C,F
+02F2:  MOVF   38,W
+02F3:  MOVWF  5D
+02F4:  MOVLW  64
+02F5:  MOVWF  5E
+02F6:  CALL   26A
+02F7:  MOVF   78,W
+02F8:  SUBWF  5B,F
+02F9:  MOVLW  00
+02FA:  BTFSS  03.0
+02FB:  MOVLW  01
+02FC:  SUBWF  5C,F
+02FD:  MOVF   39,W
+02FE:  MOVWF  5D
+02FF:  MOVLW  0A
+0300:  MOVWF  5E
+0301:  CALL   26A
+0302:  MOVF   78,W
+0303:  SUBWF  5B,W
+0304:  MOVWF  3A
+.................... 	} 
+0305:  RETURN
+.................... /*#######################################################################*/ 
+.................... /*#######################################################################*/ 
+....................  
+....................  
+....................  
+.................... //********************************************************************************// 
+.................... //*********************SETT DISPLAY 1-2*********************************************// 
+....................  
+.................... void SETT_VOLT_B_L(void) 
+.................... 	{ 
+.................... 	 while(input(BUTTON_2))	 
+.................... 		{ 
+.................... 		 delay_ms(10); 
+.................... 		 ++VOLT_B_L; 
+.................... 		} 
+.................... 	 while(input(BUTTON_1)) 
+.................... 		{ 
+.................... 		 delay_ms(10); 
+.................... 		 --VOLT_B_L; 
+.................... 		} 
+.................... 	SET_B_L=((5*VOLT_B_L)/1024)*1000; 
+.................... 	ConvertBINARYtoBCD(SET_B_L); 
+.................... 	AssignDisplay2(); 
+.................... 	} 
+....................  
+.................... //////////////////////////////////////////////////////////////////////////////////////// 
+.................... void SETT_VOLT_B_H(void) 
+.................... 	{ 
+.................... 	 while(input(BUTTON_2)) 
+.................... 		{ 
+.................... 		 delay_ms(10); 
+.................... 		 ++VOLT_B_H; 
+.................... 		}	 
+.................... 	 while(input(BUTTON_1)) 
+.................... 		{ 
+.................... 		 delay_ms(10); 
+.................... 		 --VOLT_B_H; 
+.................... 		} 
+.................... 	 
+.................... 	SET_B_H=((5*VOLT_B_H)/1024)*1000; 
+.................... 	ConvertBINARYtoBCD(SET_B_H); 
+.................... 	AssignDisplay2(); 
+.................... 	} 
+....................  
+.................... //////////////////////////////////////////////////////////////////////////////////////// 
+.................... void SETT_VOLT_A_L(void) 
+.................... 	{ 
+.................... 	while(input(BUTTON_2)) 
+.................... 		{ 
+.................... 		 delay_ms(10); 
+.................... 		 ++VOLT_A_L; 
+.................... 		}	 
+.................... 	while(input(BUTTON_1)) 
+.................... 		{ 
+.................... 		 delay_ms(10); 
+.................... 		 --VOLT_A_L; 
+.................... 		} 
+.................... 	SET_A_L=((5*VOLT_A_L)/1024)*1000; 
+.................... 	ConvertBINARYtoBCD(SET_A_L); 
+.................... 	AssignDisplay1(); 
+.................... 	} 
+.................... //////////////////////////////////////////////////////////////////////////////////////// 
+....................  
+.................... void SETT_VOLT_A_H(void) 
+.................... 	{ 
+.................... 	 while(input(BUTTON_2))// VOLT A NIN ÜST GERÝLÝM SINIRINI BELÝRLE 
+.................... 		{ 
+.................... 		 delay_ms(10); 
+.................... 		 ++VOLT_A_H; 
+.................... 		} 
+.................... 	 while(input(BUTTON_1)) 
+.................... 		{ 
+.................... 		 delay_ms(10); 
+.................... 		 --VOLT_A_H; 
+.................... 		} 
+.................... 	SET_A_H=((5*VOLT_A_H)/1024)*1000; 
+.................... 	ConvertBINARYtoBCD(SET_A_H); 
+.................... 	AssignDisplay1(); 
+.................... 	} 
+....................  
+.................... /////////////////////////////////////////////////////////////////////////////////////// 
+....................  
+....................  
+.................... //void SETT_VOLT_B_L(void) 
+.................... //	{ 
+.................... //	 if (BUTTON_2 == 1)	 
+.................... //		{ 
+.................... //		 delay_ms(10); 
+.................... //		 ++VOLT_B_L; 
+.................... //		} 
+.................... //	 if (BUTTON_1 == 1) 
+.................... //		{ 
+.................... //		 delay_ms(10); 
+.................... //		 --VOLT_B_L; 
+.................... //		} 
+.................... //	SET_B_L=((5*VOLT_B_L)/1024)*1000; 
+.................... //	ConvertBINARYtoBCD(SET_B_L); 
+.................... //	AssignDisplay2(); 
+.................... //	} 
+....................  
+....................  
+....................  
+....................  
+.................... /////////////////////////////////////////////////////////////// 
+....................  
+.................... #int_TIMER0 
+.................... void TIMER0_isr(void) 
+.................... { 
+.................... 	set_timer0(148);			//Kaç sn de bir bu kesmeye ulaþacaðýný belirledik.		 
+*
+00BD:  MOVLW  94
+00BE:  MOVWF  01
+.................... 	++TIME_MAKER;				//Bu deðiþken her döngü de 1 artar. 
+00BF:  INCF   30,F
+.................... 	DisplayDrive(); 
+00C0:  GOTO   02F
+.................... } 
+.................... /////////////////////////////////////////////////////////////// 
+....................  
+....................  
+00C1:  BCF    0B.2
+00C2:  BCF    0A.3
+00C3:  BCF    0A.4
+00C4:  GOTO   01B
+.................... void main(void) 
+.................... { 
+*
+0366:  CLRF   04
+0367:  BCF    03.7
+0368:  MOVLW  1F
+0369:  ANDWF  03,F
+036A:  MOVLW  D6
+036B:  MOVWF  44
+036C:  MOVLW  3C
+036D:  MOVWF  45
+036E:  MOVLW  E9
+036F:  MOVWF  46
+0370:  MOVLW  F3
+0371:  MOVWF  47
+0372:  MOVLW  FF
+0373:  MOVWF  58
+0374:  BSF    03.5
+0375:  BSF    1F.0
+0376:  BSF    1F.1
+0377:  BSF    1F.2
+0378:  BCF    1F.3
+.................... 	setup_timer_0(T0_INTERNAL|T0_DIV_2|T0_8_BIT);  
+0379:  MOVF   01,W
+037A:  ANDLW  C0
+037B:  MOVWF  01
+.................... 	setup_timer_1(T1_DISABLED);     
+037C:  BCF    03.5
+037D:  CLRF   10
+.................... 	setup_timer_2(T2_DISABLED,0,1);  
+037E:  MOVLW  00
+037F:  MOVWF  78
+0380:  MOVWF  12
+0381:  MOVLW  00
+0382:  BSF    03.5
+0383:  MOVWF  12
+.................... 	setup_CCP1(CCP_OFF);            //port yönleri             
+0384:  MOVLW  F0
+0385:  BCF    03.5
+0386:  ANDWF  17,F
+.................... 	setup_CCP2(CCP_OFF);            //belirlenir 
+0387:  ANDWF  1D,F
+.................... 	setup_spi(SPI_SS_DISABLED);   
+0388:  BCF    14.5
+0389:  BCF    58.5
+038A:  MOVF   58,W
+038B:  BSF    03.5
+038C:  MOVWF  07
+038D:  BCF    03.5
+038E:  BSF    58.4
+038F:  MOVF   58,W
+0390:  BSF    03.5
+0391:  MOVWF  07
+0392:  BCF    03.5
+0393:  BCF    58.3
+0394:  MOVF   58,W
+0395:  BSF    03.5
+0396:  MOVWF  07
+0397:  MOVLW  01
+0398:  BCF    03.5
+0399:  MOVWF  14
+039A:  MOVLW  00
+039B:  BSF    03.5
+039C:  MOVWF  14
+....................     
+.................... 	setup_adc(adc_clock_div_8); 
+039D:  BCF    03.5
+039E:  BSF    1F.6
+039F:  BCF    1F.7
+03A0:  BSF    03.5
+03A1:  BSF    1F.7
+03A2:  BCF    03.5
+03A3:  BSF    1F.0
+.................... 	setup_adc_ports(AN0_AN1_AN3); 
+03A4:  BSF    03.5
+03A5:  BCF    1F.0
+03A6:  BCF    1F.1
+03A7:  BSF    1F.2
+03A8:  BCF    1F.3
+....................  
+.................... 	 
+.................... 	enable_interrupts(INT_TIMER0); 
+03A9:  BCF    03.5
+03AA:  BSF    0B.5
+.................... 	enable_interrupts(GLOBAL); 
+03AB:  MOVLW  C0
+03AC:  IORWF  0B,F
+.................... 	set_timer0(148); 
+03AD:  MOVLW  94
+03AE:  MOVWF  01
+....................  
+.................... 	SET_TRIS_A(0b00110011);         		// A0,A1,A4,A5 pinleri giriþ olarak ayarlandý 
+03AF:  MOVLW  33
+03B0:  BSF    03.5
+03B1:  MOVWF  05
+.................... 	SET_TRIS_B(0b00000000);        			//B portu komple çýkýþ 
+03B2:  MOVLW  00
+03B3:  MOVWF  06
+.................... 	SET_TRIS_C(0b00000000);         		//C portu komple çýkýþ 
+03B4:  MOVWF  07
+03B5:  BCF    03.5
+03B6:  MOVWF  58
+....................  
+....................  
+.................... 	while(1) 
+.................... 	{ 
+.................... 		restart_wdt();						//WatchDogTimer ýn uyarý vermesini engellemek için 
+03B7:  CLRWDT
+....................  		if(TIME_MAKER>=4)					//1ms lik iþler 
+03B8:  MOVF   30,W
+03B9:  SUBLW  03
+03BA:  BTFSC  03.0
+03BB:  GOTO   407
+.................... 		{ 
+.................... 			TIME_MAKER=0; 
+03BC:  CLRF   30
+.................... 			++REG_10ms; 
+03BD:  INCF   31,F
+.................... 			/////// 
+.................... 			READ_VOLTAGE(); 
+03BE:  GOTO   114
+....................  
+....................  
+.................... 			if (VOLT_A < VOLT_A_L) 
+03BF:  MOVF   49,F
+03C0:  BTFSS  03.2
+03C1:  GOTO   3CC
+03C2:  MOVF   44,W
+03C3:  SUBWF  48,W
+03C4:  BTFSC  03.0
+03C5:  GOTO   3CC
+.................... 			{ 
+.................... 				BIT_SET(LED_A_L);			//UYGUN LED BÝTLERÝ B PORTUNA ATANDI 
+03C6:  BSF    2F.7
+.................... 				output_high(Buzzer); 		// BUZZER ÇIKIÞI LOJÝK 1 YAPILDI 
+03C7:  BSF    03.5
+03C8:  BCF    05.2
+03C9:  BCF    03.5
+03CA:  BSF    05.2
+.................... 			} 
+.................... 			else 
+03CB:  GOTO   3D1
+.................... 			{ 
+.................... 				BIT_CLEAR(LED_A_L);			//UYGUN LED BÝTLERÝ B PORTUNA ATANDI 
+03CC:  BCF    2F.7
+.................... 				OUTPUT_LOW(Buzzer); 		// BUZZER ÇIKIÞI LOJÝK 1 YAPILDI 
+03CD:  BSF    03.5
+03CE:  BCF    05.2
+03CF:  BCF    03.5
+03D0:  BCF    05.2
+.................... 			} 
+.................... 		 
+.................... 		    if (VOLT_A > VOLT_A_H) 
+03D1:  MOVF   49,F
+03D2:  BTFSS  03.2
+03D3:  GOTO   3D8
+03D4:  MOVF   48,W
+03D5:  SUBWF  45,W
+03D6:  BTFSC  03.0
+03D7:  GOTO   3DE
+.................... 			{ 
+.................... 				BIT_SET(LED_A_H); 
+03D8:  BSF    2F.5
+.................... 				output_high(Buzzer); 
+03D9:  BSF    03.5
+03DA:  BCF    05.2
+03DB:  BCF    03.5
+03DC:  BSF    05.2
+.................... 			} 
+.................... 			else 
+03DD:  GOTO   3E3
+.................... 			{ 
+.................... 				BIT_CLEAR(LED_A_H);			//UYGUN LED BÝTLERÝ B PORTUNA ATANDI 
+03DE:  BCF    2F.5
+.................... 				OUTPUT_LOW(Buzzer);  
+03DF:  BSF    03.5
+03E0:  BCF    05.2
+03E1:  BCF    03.5
+03E2:  BCF    05.2
+.................... 			} 
+.................... 	 
+.................... 			if (VOLT_B < VOLT_B_L) 
+03E3:  MOVF   4B,F
+03E4:  BTFSS  03.2
+03E5:  GOTO   3F0
+03E6:  MOVF   46,W
+03E7:  SUBWF  4A,W
+03E8:  BTFSC  03.0
+03E9:  GOTO   3F0
+.................... 			{ 
+.................... 				BIT_SET(LED_B_L);			//UYGUN LED BÝTLERÝ B PORTUNA ATANDI 
+03EA:  BSF    2F.1
+.................... 				output_high(Buzzer); 		// BUZZER ÇIKIÞI LOJÝK 1 YAPILDI 
+03EB:  BSF    03.5
+03EC:  BCF    05.2
+03ED:  BCF    03.5
+03EE:  BSF    05.2
+.................... 			} 
+.................... 			else 
+03EF:  GOTO   3F5
+.................... 			{ 
+.................... 				BIT_CLEAR(LED_B_L);			//UYGUN LED BÝTLERÝ B PORTUNA ATANDI 
+03F0:  BCF    2F.1
+.................... 				OUTPUT_LOW(Buzzer); 		// BUZZER ÇIKIÞI LOJÝK 1 YAPILDI 
+03F1:  BSF    03.5
+03F2:  BCF    05.2
+03F3:  BCF    03.5
+03F4:  BCF    05.2
+.................... 			} 
+.................... 		 
+.................... 		    if (VOLT_B > VOLT_B_H) 
+03F5:  MOVF   4B,F
+03F6:  BTFSS  03.2
+03F7:  GOTO   3FC
+03F8:  MOVF   4A,W
+03F9:  SUBWF  47,W
+03FA:  BTFSC  03.0
+03FB:  GOTO   402
+.................... 			{ 
+.................... 				BIT_SET(LED_B_H); 
+03FC:  BSF    2F.3
+.................... 				output_high(Buzzer); 
+03FD:  BSF    03.5
+03FE:  BCF    05.2
+03FF:  BCF    03.5
+0400:  BSF    05.2
+.................... 			} 
+.................... 			else 
+0401:  GOTO   407
+.................... 			{ 
+.................... 				BIT_CLEAR(LED_B_H);			//UYGUN LED BÝTLERÝ B PORTUNA ATANDI 
+0402:  BCF    2F.3
+.................... 				OUTPUT_LOW(Buzzer);  
+0403:  BSF    03.5
+0404:  BCF    05.2
+0405:  BCF    03.5
+0406:  BCF    05.2
+.................... 			} 
+....................  
+....................  
+.................... 		} 
+.................... 			 
+.................... 				 
+....................  
+....................  
+.................... 		if(REG_10ms>=10)					// 10 ms lik iþler 
+0407:  MOVF   31,W
+0408:  SUBLW  09
+0409:  BTFSC  03.0
+040A:  GOTO   491
+.................... 		{ 
+.................... 			REG_10ms=0; 
+040B:  CLRF   31
+.................... 			++REG_20ms; 
+040C:  INCF   32,F
+.................... 			/////// 
+....................  
+.................... 			VOLT_OLCULEN_A = ((5*VOLT_A)/1024)*4.3*1000; 
+040D:  CLRF   5C
+040E:  MOVLW  05
+040F:  MOVWF  5B
+0410:  MOVF   49,W
+0411:  MOVWF  5E
+0412:  MOVF   48,W
+0413:  MOVWF  5D
+0414:  CALL   17B
+0415:  MOVF   79,W
+0416:  MOVWF  5A
+0417:  MOVF   79,W
+0418:  MOVWF  59
+0419:  CLRF   5A
+041A:  RRF    5A,F
+041B:  RRF    59,F
+041C:  RRF    5A,F
+041D:  RRF    59,F
+041E:  MOVLW  3F
+041F:  ANDWF  5A,F
+0420:  MOVF   5A,W
+0421:  MOVWF  5C
+0422:  MOVF   59,W
+0423:  MOVWF  5B
+0424:  GOTO   190
+0425:  MOVF   7A,W
+0426:  MOVWF  60
+0427:  MOVF   79,W
+0428:  MOVWF  5F
+0429:  MOVF   78,W
+042A:  MOVWF  5E
+042B:  MOVF   77,W
+042C:  MOVWF  5D
+042D:  MOVLW  9A
+042E:  MOVWF  64
+042F:  MOVLW  99
+0430:  MOVWF  63
+0431:  MOVLW  09
+0432:  MOVWF  62
+0433:  MOVLW  81
+0434:  MOVWF  61
+0435:  CALL   1AF
+0436:  MOVF   77,W
+0437:  MOVWF  59
+0438:  MOVF   78,W
+0439:  MOVWF  5A
+043A:  MOVF   79,W
+043B:  MOVWF  5B
+043C:  MOVF   7A,W
+043D:  MOVWF  5C
+043E:  MOVWF  60
+043F:  MOVF   79,W
+0440:  MOVWF  5F
+0441:  MOVF   78,W
+0442:  MOVWF  5E
+0443:  MOVF   77,W
+0444:  MOVWF  5D
+0445:  CLRF   64
+0446:  CLRF   63
+0447:  MOVLW  7A
+0448:  MOVWF  62
+0449:  MOVLW  88
+044A:  MOVWF  61
+044B:  CALL   1AF
+044C:  MOVF   7A,W
+044D:  MOVWF  5C
+044E:  MOVF   79,W
+044F:  MOVWF  5B
+0450:  MOVF   78,W
+0451:  MOVWF  5A
+0452:  MOVF   77,W
+0453:  MOVWF  59
+0454:  GOTO   224
+0455:  MOVF   79,W
+0456:  MOVWF  4D
+0457:  MOVF   78,W
+0458:  MOVWF  4C
+.................... 			ConvertBINARYtoBCD(VOLT_OLCULEN_A);	 
+0459:  MOVF   4D,W
+045A:  MOVWF  5A
+045B:  MOVF   4C,W
+045C:  MOVWF  59
+045D:  CALL   28F
+.................... 			AssignDisplay1 (); 
+045E:  GOTO   338
+.................... 		 
+.................... 			VOLT_OLCULEN_B = ((5*VOLT_B)/1024)*11*1000; 
+045F:  CLRF   5C
+0460:  MOVLW  05
+0461:  MOVWF  5B
+0462:  MOVF   4B,W
+0463:  MOVWF  5E
+0464:  MOVF   4A,W
+0465:  MOVWF  5D
+0466:  CALL   17B
+0467:  MOVF   79,W
+0468:  MOVWF  5A
+0469:  MOVF   79,W
+046A:  MOVWF  59
+046B:  CLRF   5A
+046C:  RRF    5A,F
+046D:  RRF    59,F
+046E:  RRF    5A,F
+046F:  RRF    59,F
+0470:  MOVLW  3F
+0471:  ANDWF  5A,F
+0472:  MOVF   5A,W
+0473:  MOVWF  5C
+0474:  MOVF   59,W
+0475:  MOVWF  5B
+0476:  CLRF   5E
+0477:  MOVLW  0B
+0478:  MOVWF  5D
+0479:  CALL   17B
+047A:  MOVF   79,W
+047B:  MOVWF  5A
+047C:  MOVF   78,W
+047D:  MOVWF  59
+047E:  MOVF   79,W
+047F:  MOVWF  5C
+0480:  MOVF   78,W
+0481:  MOVWF  5B
+0482:  MOVLW  03
+0483:  MOVWF  5E
+0484:  MOVLW  E8
+0485:  MOVWF  5D
+0486:  CALL   17B
+0487:  MOVF   79,W
+0488:  MOVWF  4F
+0489:  MOVF   78,W
+048A:  MOVWF  4E
+.................... 			ConvertBINARYtoBCD(VOLT_OLCULEN_B); 
+048B:  MOVF   4F,W
+048C:  MOVWF  5A
+048D:  MOVF   4E,W
+048E:  MOVWF  59
+048F:  CALL   28F
+.................... 			AssignDisplay2 (); 
+0490:  GOTO   34F
+.................... 			 
+.................... 				 
+.................... 		} 
+.................... 	 
+....................  
+....................  
+....................  
+....................  
+....................  
+.................... 		if(REG_20ms>=2)					// 20 ms lik iþler 
+0491:  MOVF   32,W
+0492:  SUBLW  01
+0493:  BTFSC  03.0
+0494:  GOTO   499
+.................... 		{ 
+.................... 			REG_20ms=0; 
+0495:  CLRF   32
+.................... 			++REG_200ms; 
+0496:  INCF   33,F
+.................... 			/////// 
+.................... 			 
+.................... 			if((BUTTON_1==1)&&(BUTTON_2==1)) 
+.................... 				{ 
+.................... 				 set_status=1;   			// AYAR MODUNA GÝRÝLDÝ 
+.................... 				 delay_ms(1000); 
+.................... 				 set_active_disp=1;			//BU DEÐÝÞKENÝN DURUMUNA GÖRE HANGÝ LEDÝ YAKACAÐINI BÝLDÝRÝYOR 
+.................... 				 set_active_all=1; 
+.................... 				} 
+.................... 			while((BUTTON_1==1)&&(BUTTON_2==1)) 
+.................... 				{ 
+.................... 				 ++set_active_all;					//BU DEÐÝÞKEN 300 E GELENE KADAR EKRANDA SETT YAZACAK			 
+.................... 				} 
+.................... 			if(set_active_all>=300) 
+.................... 				{ 
+.................... 				 set_active_disp=0;                 // SETT ESNASSINDA LEDLER YANSIN  
+.................... 				 set_active_all=0;				 
+.................... 				 ++set_active_a; 
+.................... 				} 
+.................... 			if((BUTTON_1==1)&&(BUTTON_2==0)&&(set_active_a==1)&&(set_active_b==0)) // VOLT A NIN ALT GERÝLÝM SINIRINI BELÝRLE 
+.................... 				{ 
+.................... 				 set_active_disp=2; 
+.................... 				 ++set_active_a; 
+.................... 				 SETT_VOLT_A_L(); 
+.................... 				} 
+.................... 			if((BUTTON_1==1)&&(BUTTON_2==0)&&(set_active_a==2)&&(set_active_b==0)) // VOLT A NIN ÜST GERÝLÝM SINIRINI BELÝRLE 
+.................... 				{ 
+.................... 				 set_active_disp=3; 
+.................... 				 set_active_a=0; 
+.................... 				 SETT_VOLT_A_H(); 
+.................... 				 set_active_b=1; 
+.................... 				} 
+.................... 				 
+.................... 			if((BUTTON_2==1)&(BUTTON_1==0)&&(set_active_b==1)&&(set_active_a==0)) //  VOLT B NÝN ALT GERÝLÝM SINIRINI BELÝRLE	  
+.................... 				{ 
+.................... 				 set_active_disp=4; 
+.................... 				 ++set_active_b; 
+.................... 				 SETT_VOLT_B_L(); 
+.................... 				} 
+.................... 			if((BUTTON_2==1)&(BUTTON_1==0)&&(set_active_b==2)&&(set_active_a==0)) //  VOLT B NÝN ÜST GERÝLÝM SINIRINI BELÝRLE												 	 
+.................... 				{ 
+.................... 				 set_active_disp=5; 
+.................... 				 set_active_b=0; 
+.................... 				 SETT_VOLT_B_H(); 
+.................... 				} 
+.................... 			set_status=0; 		// AYAR MODU SONLANDIÐINI BÝLDÝR	 
+0497:  CLRF   3F
+.................... 			set_active_disp=0;	//  
+0498:  CLRF   3E
+.................... 			/////// 
+.................... 		} 
+....................  
+....................  
+....................  
+.................... 		if(REG_200ms>=11)              // 200 ms lik iþler 
+0499:  MOVF   33,W
+049A:  SUBLW  0A
+049B:  BTFSC  03.0
+049C:  GOTO   4C6
+.................... 		{ 
+.................... 			REG_200ms=0; 
+049D:  CLRF   33
+.................... 		//	++REG_400ms; 
+.................... 		 
+.................... 			/////// 
+.................... 			if(set_active_disp==1) 
+049E:  DECFSZ 3E,W
+049F:  GOTO   4A3
+.................... 				 LED_NUM=(LED_NUM^0b10101010); 
+04A0:  MOVLW  AA
+04A1:  XORWF  2F,F
+.................... 			else if(set_active_disp==2) 
+04A2:  GOTO   4C6
+04A3:  MOVF   3E,W
+04A4:  SUBLW  02
+04A5:  BTFSS  03.2
+04A6:  GOTO   4AA
+.................... 				 LED_NUM=(LED_NUM^0b10000000); 
+04A7:  MOVLW  80
+04A8:  XORWF  2F,F
+.................... 			else if(set_active_disp==3) 
+04A9:  GOTO   4C6
+04AA:  MOVF   3E,W
+04AB:  SUBLW  03
+04AC:  BTFSS  03.2
+04AD:  GOTO   4B1
+.................... 				 LED_NUM=(LED_NUM^0b00100000); 
+04AE:  MOVLW  20
+04AF:  XORWF  2F,F
+.................... 			else if(set_active_disp==4) 
+04B0:  GOTO   4C6
+04B1:  MOVF   3E,W
+04B2:  SUBLW  04
+04B3:  BTFSS  03.2
+04B4:  GOTO   4B8
+.................... 				 LED_NUM=(LED_NUM^0b00000010); 
+04B5:  MOVLW  02
+04B6:  XORWF  2F,F
+.................... 			else if(set_active_disp==5) 
+04B7:  GOTO   4C6
+04B8:  MOVF   3E,W
+04B9:  SUBLW  05
+04BA:  BTFSS  03.2
+04BB:  GOTO   4BF
+.................... 				 LED_NUM=(LED_NUM^0b0001000); 
+04BC:  MOVLW  08
+04BD:  XORWF  2F,F
+.................... 			else if(set_status==0) 
+04BE:  GOTO   4C6
+04BF:  MOVF   3F,F
+04C0:  BTFSS  03.2
+04C1:  GOTO   4C6
+.................... 				 output_low(LED_COM); 
+04C2:  BSF    03.5
+04C3:  BCF    05.3
+04C4:  BCF    03.5
+04C5:  BCF    05.3
+....................  
+.................... 			/////// 
+.................... 		 
+.................... 		} 
+.................... 	} 
+04C6:  GOTO   3B7
+.................... } 
+04C7:  SLEEP
+
+Configuration Fuses:
+   Word  1: 0C45   XT WDT PUT BROWNOUT NOLVP CPD WRT NODEBUG PROTECT

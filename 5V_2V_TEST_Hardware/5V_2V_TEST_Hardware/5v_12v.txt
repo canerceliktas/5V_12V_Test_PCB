@@ -1,0 +1,41 @@
+Partlist exported from C:/Users/Caner/Desktop/CANER/5v_2v_test/Bu sefer olacak.sch at 17.12.2018 15:47
+
+Part  Value        Device          Package      Description                          MF      MPN      OC_FARNELL OC_NEWARK
+C1                 CPOL-EUE5-8.5   E5-8,5       POLARIZED CAPACITOR, European symbol                                      
+C2                 CPOL-EUE5-8.5   E5-8,5       POLARIZED CAPACITOR, European symbol                                      
+C3                 C-EU050-025X075 C050-025X075 CAPACITOR, European symbol                                                
+C4                 C-EU050-025X075 C050-025X075 CAPACITOR, European symbol                                                
+C5                 C-EU050-025X075 C050-025X075 CAPACITOR, European symbol                                                
+C6                 C-EU050-025X075 C050-025X075 CAPACITOR, European symbol                                                
+C7                 C-EU050-025X075 C050-025X075 CAPACITOR, European symbol                                                
+DISP1 E1-4036-CUXX E1-4036-CUXX    E1-4036-CUXX                                                                           
+DISP2 E1-4036-CUXX E1-4036-CUXX    E1-4036-CUXX                                                                           
+IC1   PIC16876P    PIC16876P       DIL28-3      MICROCONTROLLER                                       unknown    unknown  
+IC2   ULN2003AN    ULN2003AN       DIL16        DRIVER ARRAY                                                              
+IC3   ULN2003AN    ULN2003AN       DIL16        DRIVER ARRAY                                                              
+IC4   788TV        788TV           TO220V       Positive VOLTAGE REGULATOR                                                
+LED1               LED5MM          LED5MM       LED                                                                       
+LED2               LED5MM          LED5MM       LED                                                                       
+LED3               LED5MM          LED5MM       LED                                                                       
+LED4               LED5MM          LED5MM       LED                                                                       
+R1                 R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+R2                 R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+R3                 R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+R4                 R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+R5                 R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+R6                 R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+R7                 R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+R8                 R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+R9                 R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+R10                R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+R11                R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+R12                R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+R13                R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+R14                R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+R15                R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+R16                R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+R17                R-EU_0207/10    0207/10      RESISTOR, European symbol                                                 
+S1                 10-XX           B3F-10XX     OMRON SWITCH                                 B3F-1000 176432     36M3542  
+S2                 10-XX           B3F-10XX     OMRON SWITCH                                 B3F-1000 176432     36M3542  
+SG1   F/CM12P      F/CM12P         F/CM12P      BUZZER Source: Buerklin                               unknown    unknown  
+X1    MSTBA4       MSTBA4          MSTBA4       PHOENIX                              FARNELL 1757268  3705195    71C4163  
